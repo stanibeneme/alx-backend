@@ -39,27 +39,31 @@ class Server:
             }
         return self.__indexed_dataset
 
-    def get_hyper_index(self, index: int = None,
-                        page_size: int = 10) -> Dict:
-        """ return all data"""
+    def get_hyper_index(self, index: int = None, page_size: int = 10) -> Dict:
+        """The goal here is that if between two queries, certain rows are
+        removed from the dataset, the user does not miss items from
+        dataset when changing page.
 
-        if index is None:
-            index = 0
+        Args:
+            index (int, optional): current start index of the return page.
+            Defaults to None.
+            page_size (int, optional): the current page size. Defaults to 10.
 
-        # validate the index
-        assert isinstance(index, int)
-        assert 0 <= index < len(self.indexed_dataset())
-        assert isinstance(page_size, int) and page_size > 0
+        Returns:
+            Dict: dictionary containing the following key-value pairs
+            --> index, next_index, page_size, data
+        """
+        max_index = len(self.dataset())
+        assert type(index) is int and index < max_index
+        gap = 0
 
-        data = []  # collect all indexed data
-        next_index = index + page_size
+        for idx in range(index, max_index):
+            if self.indexed_dataset().get(idx):
+                break
+            gap += 1
 
-        for value in range(index, next_index):
-            if self.indexed_dataset().get(value):
-                data.append(self.indexed_dataset()[value])
-            else:
-                value += 1
-                next_index += 1
+        next_index = idx + page_size
+        data = self.dataset()[idx:next_index]
 
         return {
             'index': index,
